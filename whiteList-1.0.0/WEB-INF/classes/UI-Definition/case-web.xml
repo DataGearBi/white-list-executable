@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ui-definition SYSTEM "uiDefinition.dtd">
+<ui-definition id="cases" type="case">
+	<title>Cases</title>
+	<screen id="case">
+		<initialize>
+			<set name="TEMP.DEFAULT_SAR_FORM_CD" value="'SARDI'" />
+			<set name="TEMP.IGNORE_BRANCH_OVERRIDE_ONCHANGE" value="true" />
+			<set name="TEMP.IGNORE_INSTITUTION_OVERRIDE_ONCHANGE" value="true" />
+			<set name="TEMP.CASE.INVESTIGATOR_USER_DISPLAY" value="GetUserDisplayName(CASE.INVESTIGATOR_USER_ID)" />
+			<set name="TEMP.CASE.LOCK_USER_DISPLAY" value="GetUserDisplayName(CASE.LOCK_USER_ID)" />
+			<set name="TEMP.CASE.CREATE_USER_DISPLAY" value="GetUserDisplayName(CASE.CREATE_USER_ID)" />         
+		</initialize>      
+		
+		<if test="IsUserInGroup('SHOWWEBGROUP')">	
+		<section id="Activities" expanded="true">
+			<label><message key="section.action.items.header.txt" /></label>
+			<if test="IsEntitySaved()">
+				<datagrid  component-name="WorkflowGrid" name="WorkflowGrid">
+					<param name="recordsPerPage" value="10"/>
+					<param name="canTerminate" value="IsCapable('Terminate Case Workflow')" />
+					<param name="canActivate" value="IsCapable('Activate Case Workflow')" />
+					<param name="terminateStatus" value="'T'" />
+					<param name="workflowTable" value="'X_RT_REOPEN_CASE_WF_WEB'"/>
+					 <param name="autoCreate" value="empty(CASE.INVESTIGATOR_USER_ID)" />
+				</datagrid>
+			</if>
+		</section>
+			
+		 <field name="TEMP.IGNORED" readonly="true" visible="false" type="string"  >
+			<label>Error</label>
+			
+	
+		</field>
+		
+		<section id="Search_Query" expanded="true">
+			<label>Transaction Body</label>
+			<field name="CASE.x_swfm"  readonly="true" type="textarea" >
+                <label>
+					
+                </label>
+            </field>
+		</section >
+		<section id="caseInfo" expanded="true">
+			<label><message key="section.case.information.header.txt" /></label>
+			<tab-section id="viewCaseTab">
+                <tab id="incidentsTab">
+					<label><message key="tab.case.incidents.header.txt" /></label>
+					<datagrid name="X_INCEDENT.GRID" component-name="GenericEntityGrid" selectedKeyField="X_ENTITY_LIST1.X_INCIDENT_ROWNO">
+						<label><message key="CASE.other.addresses.section.label.txt" /></label>
+						<datagrid-column name="X_ENTITY_LIST1.X_INCIDENT_ID">
+							<label><!--<message key="field.CASE.x_ENTITY_WATCH_LIST_NUMBER.label.txt" /> --> Incident ID</label>
+						</datagrid-column>
+						<datagrid-column name="X_ENTITY_LIST1.X_SOURCE_NAME">
+							<label><!--<message key="field.CASE.x_ENTITY_WATCH_LIST_NUMBER.label.txt" /> --> Party Name</label>
+						</datagrid-column>
+						<datagrid-column name="X_ENTITY_LIST1.X_PARTYNAME_MAXRANK">
+							<label><!--<message key="field.CASE.x_ENTITY_WATCH_LIST_NUMBER.label.txt" /> --> Max Rank</label>
+						</datagrid-column>
+						<datagrid-column name="X_ENTITY_LIST1.X_INCIDENT_DESC">
+							<label><!--<message key="field.CASE.x_ENTITY_WATCH_LIST_NUMBER.label.txt" /> --> Incident DESCRIPTION</label>
+						</datagrid-column>
+						<param name="objectName" value="'CASE'" />
+						<param name="tableName" value="'X_ENTITY_LIST1'" />
+						<param name="dialogScreenId" value="'X_ENTITY_LIST1'" />
+						<param name="rowTypeDescription" value="GetProperty('rowTypeDescription.CASE.X_ENTITY_LIST1.txt')" />
+						<param name="canAdd" value="false" /> 
+						<param name="canEdit" value="true" /> 
+						<param name="canDelete" value="false" /> 
+						<param name="dialogWidth" value="600" /> 
+						<param name="dialogHeight" value="100" />
+						<on-select>
+							<set-value name="TEMP.ICDROWNO" value="GetSelectedDataGridItem('X_INCEDENT.GRID', 'X_ENTITY_LIST1.X_INCIDENT_ROWNO')"/>
+							<set-value name="TEMP.X_ENTITY_LIST1.ROWNO1" value="Concat('ROWNO=',TEMP.ICDROWNO)" if="not Empty(TEMP.ICDROWNO)"/>
+							<set-visible name="test_section" test="not Empty(TEMP.ICDROWNO) "/>
+							<refresh name="TEMP.X_ENTITY_LIST1.ROWNO1" if="not Empty(TEMP.ICDROWNO)" />
+							<refresh name="cust_store" />
+						</on-select>
+					</datagrid>
+				</tab>
+				<tab id="historyTab">
+					<label><message key="tab.case.case.history.header.txt" /></label>
+					<datagrid name='HISTORY.GRID' component-name='EntityEventGrid'>
+					</datagrid>
+				</tab>
+				<tab id="commentsTab">
+					<label><message key="section.comments.list.header.txt" /></label>
+
+					<field type="component" required="false" component-name="CommentsAndAttachments" name="TEMP.COMMENTS">
+						<param name="height" value="500" />
+						<param name="objectTypeId" value="GetObjectTypeId('CASE')" />
+						<param name="objectId" value="CASE.CASE_RK" />
+					</field>
+				</tab>
+		
+		
+		
+		<tab id="linkedCasesTab">
+          <label>
+            <message key="tab.case.linked.cases.header.txt" />
+          </label>
+          <datagrid name="LinkedCases.Grid" component-name="LinkedCasesGrid">
+            <datagrid-column name="CASE.CASE_ID"><datagrid-renderer-ref id="sas_entityLinkRenderer" args="Case:CASE.CASE_RK"/></datagrid-column>
+            <datagrid-column name="CASE.X_KYC_CUSTOMER"><label><message key="field.case.kyc.X_KYC_CUSTOMER.label.txt"/></label></datagrid-column>
+            <datagrid-column name="CASE.X_KYC_FULL_NAME_AR"><label><message key="field.party.x_kyc_full_name_ar.header.txt"/></label></datagrid-column>
+            <datagrid-column name="CASE.X_KYC_FULL_NAME_EN"><label><message key="field.case.x_kyc_full_name_en.header.txt"/></label></datagrid-column>
+            <datagrid-column name="CASE.CREATE_DTTM"><datagrid-renderer-ref id="sas_dateTimeRenderer"/></datagrid-column>
+            <datagrid-column name="CASE.INVESTIGATOR_USER_ID"><datagrid-renderer-ref id="sas_userNameRenderer"/></datagrid-column>
+            <datagrid-column name="CASE.CASE_TYPE_CD"><datagrid-renderer-ref id="sas_refTableRenderer" args="RT_CASE_TYPE"/></datagrid-column>
+            <datagrid-column name="CASE.CASE_STATUS_CD"><datagrid-renderer-ref id="sas_refTableRenderer" args="RT_CASE_STATUS"/></datagrid-column>
+			<grid-action id="CASE.GRID_test_refresh" output-destination="inline" render-type="always">
+               <label>Refresh</label>
+             
+               <param name="entityType" value="'incident'"/>
+               <!--param name="INCIDENT.INVESTIGATOR_USER_ID" value="TEMP.NEW_INVESTIGATOR"/-->
+            </grid-action>
+          </datagrid>
+        </tab>
+		
+		
+		
+		
+		
+			</tab-section>
+		</section>
+		<section id ="test_section" expanded="true" visible="false"> 
+			<label>Related Watch List Subjects</label>
+			<datastore data="GetGridDataFromContext('X_ENTITY_LIST')" id="cust_store"/>
+			<datagrid name="X_WATCHLIST.GRID"  >
+				<label>WATCH LIST GRID</label>
+                <datastore-ref id="cust_store"/>
+				<datagrid-column name="X_ENTITY_LIST.ENTITY_NAME">
+					<label>ENTITY NAME</label>
+				</datagrid-column>
+				<datagrid-column name="X_ENTITY_LIST.X_RANK">
+					<label>RANK</label>
+				</datagrid-column>
+				<datagrid-column name="X_ENTITY_LIST.WATCH_LIST_NAME">
+					<label>WATCH LIST NAME</label>
+				</datagrid-column>
+				<datagrid-column name="X_ENTITY_LIST.X_YEAR_OF_BIRTH">
+					<label>YEAR OF BIRTH</label>
+				</datagrid-column>
+				<datagrid-column name="X_ENTITY_LIST.CITIZENSHIP_COUNTRY_NAME">
+					<label>COUNTRY NAME</label>
+				</datagrid-column>
+			    <!-- <filter value="matches(X_ENTITY_LIST.ROWNO, Concat('.*(?i:', PARENT.TEMP.ICDROWNO, ').*'))"/> -->
+				 <filter value="matches(X_ENTITY_LIST.ROWNO,PARENT.TEMP.ICDROWNO)"/> 
+				<param name="objectName" value="'CASE'" />
+				<!-- <param name="filter" value="TEMP.X_ENTITY_LIST1.ROWNO1" />  -->
+				<param name="tableName" value="'X_ENTITY_LIST'" />
+				<param name="dialogScreenId" value="'X_ENTITY_LIST'" />
+				<param name="rowTypeDescription" value="GetProperty('rowTypeDescription.CASE.X_ENTITY_LIST.txt')" />
+				<param name="canAdd" value="false" /> 
+				<param name="canEdit" value="false" /> 
+				<param name="canDelete" value="false" /> 
+				<on-select>
+					<!-- <set-visible name="PARTY_Detail" test="not Empty(TEMP.X_ENTITY_LIST.ENTITY_NAME) "/> -->
+					<!-- <set-visible name="MatchDetails" test="not Empty(TEMP.X_ENTITY_LIST.ENTITY_NAME) "/> -->
+					
+					
+					
+						
+					<set-value name="TEMP.X_ENTITY_LIST.ENTITY_WATCH_LIST_NUM" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.ENTITY_WATCH_LIST_NUM')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.ORG_COUNTRY_OF_BUSINESS_CODE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.ORG_COUNTRY_OF_BUSINESS_CODE')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.REMARKS" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.REMARKS')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.EDD_BIC" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.EDD_BIC')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.EDD_COUNTRY" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.EDD_COUNTRY')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.EDD_BIC" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.EDD_BIC')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.WATCH_LIST_SUB_CATGRY" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.WATCH_LIST_SUB_CATGRY')"/>
+					
+				    <set-value name="TEMP.X_ENTITY_LIST.WATCH_LIST_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.WATCH_LIST_NAME')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.CATEGORY_DESC" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.CATEGORY_DESC')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.TYPE_DESC" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.TYPE_DESC')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.PROGRAMS" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.PROGRAMS')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.TAX_ID" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.TAX_ID')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.TAX_ID_value_CODE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.TAX_ID_value_CODE')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.IDENTIFICATION_ID" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.IDENTIFICATION_ID')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.IDENT_TYPE_DESC" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.IDENT_TYPE_DESC')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.PLACE_OF_BIRTH" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.PLACE_OF_BIRTH')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.DECEASED_IND" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.DECEASED_IND')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.FIRST_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.FIRST_NAME')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.LAST_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.LAST_NAME')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.MIDDLE_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.MIDDLE_NAME')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.ENTITY_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.ENTITY_NAME')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.ENTITY_TITLE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.ENTITY_TITLE')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.OCCUPATION_BUS_value_TXT" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.OCCUPATION_BUS_value_TXT')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.ADDRESS" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.ADDRESS')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.PRIMARY_CITY_NM" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.PRIMARY_CITY_NM')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.STATE_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.STATE_NAME')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.POSTAL_CODE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.POSTAL_CODE')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.COUNTRY_CODE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.COUNTRY_CODE')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.PRIMARY_COUNTRY_CD" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.PRIMARY_COUNTRY_CD')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.FULL_ADDRESS" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.FULL_ADDRESS')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.CITIZENSHIP_COUNTRY_CODE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.CITIZENSHIP_COUNTRY_CODE')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.CITIZENSHIP_COUNTRY_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.CITIZENSHIP_COUNTRY_NAME')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.NATIONALITY_COUNTRY_CODE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.NATIONALITY_COUNTRY_CODE')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.NATIONALITY_COUNTRY_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.NATIONALITY_COUNTRY_NAME')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.ORG_COUNTRY_OF_BUSINESS_NAME" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.ORG_COUNTRY_OF_BUSINESS_NAME')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.POLIT_EXPOSED_PERSON_IND" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.POLIT_EXPOSED_PERSON_IND')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.EXCLUDE_IND" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.EXCLUDE_IND')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.CHANGE_CURRENT_IND" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.CHANGE_CURRENT_IND')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_BIRTH_DT" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_BIRTH_DT')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.X_CREATE_DATE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_CREATE_DATE')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_UPDATE_DATE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_UPDATE_DATE')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_CHANGE_BEGIN_DATE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_CHANGE_BEGIN_DATE')"/>
+					<set-value name="TEMP.X_ENTITY_LIST.X_CHANGE_END_DATE" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_CHANGE_END_DATE')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_YEAR_OF_BIRTH" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_YEAR_OF_BIRTH')"/> 
+					
+					
+					<set-value name="TEMP.X_ENTITY_LIST.X_FURTHERINFO" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_FURTHERINFO')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_ALIASES" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_ALIASES')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_CONREL" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_CONREL')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_SOURCES" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_SOURCES')"/> 
+					<set-value name="TEMP.X_ENTITY_LIST.X_KEYWORDS" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_KEYWORDS')"/> 
+					 <set-value name="TEMP.X_ENTITY_LIST.X_KEYDELTA" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_KEYDELTA')"/> 
+					   <set-value name="TEMP.X_ENTITY_LIST.X_REMARKS" value="GetSelectedDataGridItem('X_WATCHLIST.GRID', 'X_ENTITY_LIST.X_REMARKS')"/> 
+					
+                </on-select>    
+            </datagrid>
+		</section>	  
+		<section id ="PARTY_Detail" expanded="true" visible="false"> 
+			<label>Subject Details</label>
+			<column-layout>
+				<column>				
+					<field name="TEMP.X_ENTITY_LIST.ENTITY_WATCH_LIST_NUM" readonly="true"  type="string" >    <label>ENTITY WATCH LIST NUMBER</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.WATCH_LIST_NAME" readonly="true"  type="string" >          <label>WATCH LIST NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.CATEGORY_DESC" readonly="true"  type="string" >            <label>CATEGORY DESCRIPTION</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.TYPE_DESC" readonly="true"  type="string" >                <label>TYPE DESCRIPTION</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.PROGRAMS" readonly="true"  type="string" >                 <label>PROGRAMS</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.TAX_ID" readonly="true"  type="string" >                   <label>TAX ID</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.TAX_ID_TYPE_CODE" readonly="true"  type="string"  >        <label>TAX ID TYPE CODE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.IDENTIFICATION_ID" readonly="true"  type="string" >        <label>IDENTIFICATION ID</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.IDENT_TYPE_DESC" readonly="true"  type="string" >  <label>IDENTIFICATION TYPE DESC</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.X_BIRTH_DT" readonly="true"  type="string" >               <label>BIRTH DATE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.X_YEAR_OF_BIRTH" readonly="true"  type="string" >          <label>BIRTH YEAR </label> </field>
+					<field name="TEMP.X_ENTITY_LIST.PLACE_OF_BIRTH" readonly="true"  type="string" >           <label> BIRTH PLACE </label> </field>
+					<field name="TEMP.X_ENTITY_LIST.DECEASED_IND" readonly="true"  type="string" >             <label>DECEASED IND</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.FIRST_NAME" readonly="true"  type="string" >               <label>FIRST NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.LAST_NAME" readonly="true"  type="string" >                <label>LAST NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.MIDDLE_NAME" readonly="true"  type="string" >              <label>MIDDLE NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.ENTITY_NAME" readonly="true"  type="string" >              <label>ENTITY NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.ENTITY_TITLE" readonly="true"  type="string" >             <label>ENTITY TITLE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.OCCUPATION_BUS_TYPE_TXT" readonly="true"  type="string" >  <label>OCCUPATION DESCRIPTION</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.ADDRESS" readonly="true"  type="string" >                  <label>ADDRESS</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.PRIMARY_CITY_NM" readonly="true"  type="string" >                   <label> CITY NAME</label> </field>S
+				</column>
+				<column>
+				
+					<field name="TEMP.X_ENTITY_LIST.STATE_NAME" readonly="true"  type="string" >                    <label>STATE NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.POSTAL_CODE" readonly="true"  type="string" >                   <label>POSTAL CODE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.COUNTRY_CODE" readonly="true"  type="string" >                  <label>COUNTRY CODE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.PRIMARY_COUNTRY_CD" readonly="true"  type="string" >            <label>COUNTRY NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.FULL_ADDRESS" readonly="true"  type="string" >                  <label>FULL ADDRESS</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.CITIZENSHIP_COUNTRY_CODE" readonly="true"  type="string" >      <label>CITIZENSHIP COUNTRY CODE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.CITIZENSHIP_COUNTRY_NAME" readonly="true"  type="string" >      <label>CITIZENSHIP COUNTRY NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.NATIONALITY_COUNTRY_CODE" readonly="true"  type="string" >      <label>NATIONALITY COUNTRY CODE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.NATIONALITY_COUNTRY_NAME" readonly="true"  type="string" >      <label>NATIONALITY COUNTRY NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.ORG_COUNTRY_OF_BUSINESS_CODE" readonly="true"  type="string" >  <label>BUSINESS ORG COUNTRY CODE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.ORG_COUNTRY_OF_BUSINESS_NAME" readonly="true"  type="string" >  <label>BUSINESS ORG COUNTRY NAME</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.POLIT_EXPOSED_PERSON_IND" readonly="true"  type="string" >      <label>POLITCLY EXPOSED PERSON IND</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.X_CREATE_DATE" readonly="true"  type="string" >                 <label>CREATE DATE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.X_UPDATE_DATE" readonly="true"  type="string" >                 <label>UPDATE DATE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.EXCLUDE_IND" readonly="true"  type="string" >                   <label>EXCLUDE IND</label> </field>
+					
+					<field name="TEMP.X_ENTITY_LIST.REMARKS" readonly="true"  type="string" >                   <label>REMARKS</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.EDD_BIC" readonly="true"  type="string" >                   <label>EDD_BIC</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.EDD_COUNTRY" readonly="true"  type="string" >                   <label>EDD_COUNTRY</label> </field>
+					
+					
+					<field name="TEMP.X_ENTITY_LIST.X_CHANGE_BEGIN_DATE" readonly="true"  type="string" >           <label>CHANGE BEGIN DATE</label> </field> 
+					<field name="TEMP.X_ENTITY_LIST.X_CHANGE_END_DATE" readonly="true"  type="string" >             <label>CHANGE END DATE</label> </field>
+					<field name="TEMP.X_ENTITY_LIST.CHANGE_CURRENT_IND" readonly="true"  type="string" >            <label>CHANGE CURRENT IND</label> </field>
+					
+					<field name="TEMP.X_ENTITY_LIST.WATCH_LIST_SUB_CATGRY" readonly="true"  type="string" >      <label>WATCH LIST SUB CATEGORY</label> </field>
+					
+				</column>
+			</column-layout>
+		</section>
+		
+		
+		
+		<section id="MatchDetails" expanded="true" >
+			<label>Match Details</label>
+			<tab-section id="view7CaseTab" >
+                     <tab id="Furtherinfo" >
+					 <label>Further Info</label>
+					        	<field name="TEMP.X_ENTITY_LIST.X_FURTHERINFO"  readonly="true"  type="string" >        
+								<label></label> </field>
+				     </tab>
+				     <tab id="Aliases" >
+					 <label>Aliases</label>
+				<field name="TEMP.X_ENTITY_LIST.X_ALIASES" readonly="true"   type="string" >        
+								<label></label> </field>
+				     </tab>
+				     <tab id="ConnectionRelationship" >
+				 	  <label>Connection Relationship</label>
+					  <field name="TEMP.X_ENTITY_LIST.X_CONREL" readonly="true"   type="string" >        
+								<label></label> </field>
+                      </tab>
+		             <tab id="Sources" >
+                       <label>Sources</label>                                      
+					   <field name="TEMP.X_ENTITY_LIST.X_SOURCES" readonly="true"    type="string" >        
+								<label></label> </field>                           
+                     </tab>                                                        
+		                                                                           
+		            <tab id="KeyWords" >                            
+                       <label>Key Words </label>                                   
+					   <field name="TEMP.X_ENTITY_LIST.X_KEYWORDS" readonly="true"  type="string" >        
+								<label></label> </field>                           
+                     </tab>                                                        
+					 <tab id="KeyDelta" >                           
+                       <label>Key Data </label>                                   
+					   <field name="TEMP.X_ENTITY_LIST.X_KEYDELTA" readonly="true"   type="string" >        
+								<label></label> </field>
+                     </tab>
+		            
+		    <tab id="REMARKSS" >
+					 <label>Remarks</label>
+					        	<field name="TEMP.X_ENTITY_LIST.X_REMARKS"  readonly="true"  type="string" >        
+								<label></label> </field>
+				     </tab>
+		
+		
+		
+		
+			</tab-section>
+		</section>
+		
+		<section id="caseTab">
+            <label><message key="tab.case.details.header.txt" /></label>
+            <column-layout>
+                <column width="100%">
+                    <field name="CASE.CASE_ID" type="hidden"/>
+                    <field name="CASE.REGULATORY_RPT_RQD_FLG" type="hidden"/>
+                     
+                    <field name="CASE.CASE_TYPE_CD" type="dropdown" required="false" readonly="true" 
+                           values="GetLabelValues('RT_CASE_TYPE')">
+                        <label>
+							<message key="field.case.case_type_cd.label.txt" />
+                        </label>
+                    </field>
+                    <field name="CASE.PRIORITY_CD" type="dropdown" values="GetLabelValues('X_RT_PRIORITY')">
+                        <label>
+							<message key="field.case.priority_cd.label.txt" />
+                        </label>
+                    </field>
+					<field name="CASE.X_CASE_INITIATOR" type="string" readonly="true">
+                        <label>
+							Case Initiator
+                        </label>
+                    </field>
+					<field name="CASE.X_CASE_INIT_BRANCH" type="string" readonly="true">
+                        <label>
+							Initiator Branch
+                        </label>
+                    </field>
+                    <!--<field name="TEMP.CASE.CREATE_USER_DISPLAY" type="string" readonly="true">
+                        <label>
+							<message key="field.case.create_user_id.label.txt" />
+                        </label>
+                    </field>-->
+                    <field name="CASE.CREATE_DTTM" type="date" readonly="true">
+                        <label>
+							<message key="field.case.create_dttm.label.txt" />
+                        </label>
+                    </field>
+                </column>
+            </column-layout>
+        </section>
+		<finalize>         
+			<validation test="isIDSourceSystemUnique(CASE.CASE_ID, CASE.SOURCE_SYSTEM_CD)">
+				<errmsg>
+					<message key="field.id.source_system_cd.not.unique.error.txt" />
+				</errmsg>
+			</validation>
+
+			<set name="TEMP.IGNORE_INSTITUTION_OVERRIDE_ONCHANGE" value="true" />
+			<set name="TEMP.IGNORE_BRANCH_OVERRIDE_ONCHANGE" value="true" />
+      </finalize>
+	  </if>
+	</screen>
+	<screen id="X_ENTITY_LIST1">
+		<title>WATCH LIST </title>
+		<initialize>
+			<set name="TEMP.X_ENTITY_LIST1.ROWNO" value="Concat('ROWNO=',X_ENTITY_LIST1.X_INCIDENT_ROWNO)" /><!-- use for filter  -->
+			
+        </initialize>
+		<field name="CASE.X_KYC_WHITE_LIST" type="boolean"  readonly="false"  >
+			<label>Are You Sure You Want to Add this Incident To White List?</label>
+			 	<on-change>
+				<set-value name="TEMP.X_KYC_WL_SP" value="RunHttpRequest('http://localhost:90/whiteList-1.0.0/white-list/create-white-list', null,'POST','Powered By: Sanctionists, Content-Type: application/json','some data',Concat('Inputs=', CASE.CASE_RK),Concat('Inputs=', X_ENTITY_LIST1.X_SOURCE_NAME),Concat('Inputs=', X_ENTITY_LIST1.X_INCIDENT_ID), 
+			Concat('Inputs=',X_ENTITY_LIST1.X_PARTYNAME_MAXRANK),Concat('Inputs=', GetUserId()))" /> 
+			
+		</on-change>
+		</field>
+		
+		<field name="case.X_KYC_TEST" readonly="FALSE" visible="false" type="string"  >
+		<label>Add to white list data</label> 
+	
+		</field>
+	<set-value name="TEST.IGNORED" value="if(TEMP.X_KYC_WL_SP, 'Whitelist case has been created.', AddPageMessage('An error occurred loading data for this screen.', 'error'))"/>
+
+    
+     
+	</screen>
+	<screen id="X_ENTITY_LIST">
+
+		<field name="X_ENTITY_LIST.WATCH_LIST_NAME" type="string">  <label>WATCH_LIST_NAME</label> </field>
+		<field name="X_ENTITY_LIST.CATEGORY_DESC" type="string">  <label>CATEGORY_DESC</label> </field>
+		<field name="X_ENTITY_LIST.TYPE_DESC" type="string">  <label>TYPE_DESC</label> </field>
+		<field name="X_ENTITY_LIST.PROGRAMS" type="string">  <label>PROGRAMS</label> </field>
+		<field name="X_ENTITY_LIST.TAX_ID" type="string">  <label>TAX_ID</label> </field>
+		<field name="X_ENTITY_LIST.TAX_ID_TYPE_CODE" type="string">  <label>TAX_ID_TYPE_CODE</label> </field>
+		<field name="X_ENTITY_LIST.IDENTIFICATION_ID" type="string">  <label>IDENTIFICATION_ID</label> </field>
+		<field name="X_ENTITY_LIST.IDENT_TYPE_DESC" type="string">  <label>IDENT_TYPE_DESC</label> </field>
+		<field name="X_ENTITY_LIST.PLACE_OF_BIRTH" type="string">  <label>PLACE_OF_BIRTH</label> </field>
+		<field name="X_ENTITY_LIST.DECEASED_IND" type="string">  <label>DECEASED_IND</label> </field>
+		<field name="X_ENTITY_LIST.FIRST_NAME" type="string">  <label>FIRST_NAME</label> </field>
+		<field name="X_ENTITY_LIST.LAST_NAME" type="string">  <label>LAST_NAME</label> </field>
+		<field name="X_ENTITY_LIST.MIDDLE_NAME" type="string">  <label>MIDDLE_NAME</label> </field>
+		<field name="X_ENTITY_LIST.ENTITY_NAME" type="string">  <label>ENTITY_NAME</label> </field>
+		<field name="X_ENTITY_LIST.ENTITY_TITLE" type="string">  <label>ENTITY_TITLE</label> </field>
+		<field name="X_ENTITY_LIST.OCCUPATION_BUS_TYPE_TXT" type="string">  <label>OCCUPATION_BUS_TYPE_TXT</label> </field>
+		<field name="X_ENTITY_LIST.ADDRESS" type="string">  <label>ADDRESS</label> </field>
+		<field name="X_ENTITY_LIST.PRIMARY_CITY_NM" type="string">  <label>PRIMARY_CITY_NM</label> </field>
+		<field name="X_ENTITY_LIST.STATE_NAME" type="string">  <label>STATE_NAME</label> </field>
+		<field name="X_ENTITY_LIST.POSTAL_CODE" type="string">  <label>POSTAL_CODE</label> </field>
+		<field name="X_ENTITY_LIST.COUNTRY_CODE" type="string">  <label>COUNTRY_CODE</label> </field>
+		<field name="X_ENTITY_LIST.PRIMARY_COUNTRY_CD" type="string">  <label>PRIMARY_COUNTRY_CD</label> </field>
+		<field name="X_ENTITY_LIST.FULL_ADDRESS" type="string">  <label>FULL_ADDRESS</label> </field>
+		<field name="X_ENTITY_LIST.CITIZENSHIP_COUNTRY_CODE" type="string">  <label>CITIZENSHIP_COUNTRY_CODE</label> </field>
+		<field name="X_ENTITY_LIST.CITIZENSHIP_COUNTRY_NAME" type="string">  <label>CITIZENSHIP_COUNTRY_NAME</label> </field>
+		<field name="X_ENTITY_LIST.NATIONALITY_COUNTRY_CODE" type="string">  <label>NATIONALITY_COUNTRY_CODE</label> </field>
+		<field name="X_ENTITY_LIST.NATIONALITY_COUNTRY_NAME" type="string">  <label>NATIONALITY_COUNTRY_NAME</label> </field>
+		<field name="X_ENTITY_LIST.ORG_COUNTRY_OF_BUSINESS_NAME" type="string">  <label>ORG_COUNTRY_OF_BUSINESS_NAME</label> </field>
+		<field name="X_ENTITY_LIST.POLIT_EXPOSED_PERSON_IND" type="string">  <label>POLIT_EXPOSED_PERSON_IND</label> </field>
+		<field name="X_ENTITY_LIST.EXCLUDE_IND" type="string">  <label>EXCLUDE_IND</label> </field>
+		<field name="X_ENTITY_LIST.CHANGE_CURRENT_IND" type="string">  <label>CHANGE_CURRENT_IND</label> </field>
+		<field name="X_ENTITY_LIST.X_BIRTH_DT" type="string">  <label>X_BIRTH_DT</label> </field>
+		<field name="X_ENTITY_LIST.X_CREATE_DATE" type="string">  <label>X_CREATE_DATE</label> </field>
+		<field name="X_ENTITY_LIST.X_UPDATE_DATE" type="string">  <label>X_UPDATE_DATE</label> </field>
+		<field name="X_ENTITY_LIST.X_CHANGE_BEGIN_DATE" type="string">  <label>X_CHANGE_BEGIN_DATE</label> </field> 
+		<field name="X_ENTITY_LIST.X_CHANGE_END_DATE" type="string">  <label>X_CHANGE_END_DATE</label> </field>
+		<field name="X_ENTITY_LIST.X_YEAR_OF_BIRTH" type="string">  <label>X_YEAR_OF_BIRTH</label> </field>
+ 
+	  </screen>
+</ui-definition>
